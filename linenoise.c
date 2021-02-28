@@ -959,9 +959,9 @@ static int linenoiseEdit(int stdin_fd,
             linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_NEXT);
             break;
         case ESC: /* escape sequence */
-            /* Read the next two bytes representing the escape sequence.
-             * Use two calls to handle slow terminals returning the two
-             * chars at different times. */
+                  /* Read the next two bytes representing the escape sequence.
+                   * Use two calls to handle slow terminals returning the two
+                   * chars at different times. */
             if (read(l.ifd, seq, 1) == -1)
                 break;
             if (read(l.ifd, seq + 1, 1) == -1)
