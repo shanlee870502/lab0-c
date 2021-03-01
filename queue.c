@@ -31,7 +31,7 @@ void q_free(queue_t *q)
     if (!q) {
         return;
     }
-    while (q->head) {
+    for (int i = 0; i < q->size; i++) {
         list_ele_t *tmp = q->head;
         q->head = q->head->next;
         free(tmp->value);
@@ -52,6 +52,7 @@ bool q_insert_head(queue_t *q, char *s)
     if (!q) {
         return false;
     }
+
     list_ele_t *newh = malloc(sizeof(list_ele_t));
 
     if (!newh) {
@@ -69,7 +70,7 @@ bool q_insert_head(queue_t *q, char *s)
     if (q->size == 0) {
         q->tail = newh;
     }
-    q->size++;
+    q->size += 1;
     return true;
 }
 
@@ -86,21 +87,21 @@ bool q_insert_tail(queue_t *q, char *s)
         return false;
     }
 
-    list_ele_t *newt;
-    newt = malloc(sizeof(list_ele_t));
+    list_ele_t *newt = malloc(sizeof(list_ele_t));
+
     if (!newt) {
         return false;
     }
-    newt->next = NULL;
+
     int t_len = strlen(s) + 1;  // Including '\x00'
     newt->value = (char *) malloc(t_len);
     if (!newt->value) {
         free(newt);
         return false;
     }
-    strlcpy(newt->value, s, t_len);
+    strncpy(newt->value, s, t_len);
     newt->next = NULL;
-    if (!q->head) {
+    if (q->size == 0) {
         q->head = newt;
     } else {
         q->tail->next = newt;
@@ -144,6 +145,9 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
  */
 int q_size(queue_t *q)
 {
+    if (!q || !q->head) {
+        return 0;
+    }
     return q->size;
 }
 
@@ -156,10 +160,75 @@ int q_size(queue_t *q)
  */
 void q_reverse(queue_t *q)
 {
-    /* TODO: You need to write the code for this function */
-    /* TODO: Remove the above comment when you are about to implement. */
-}
+    if (!q || q->size < 2) {
+        return;
+    }
+    list_ele_t *prev, *curr, *next;
+    prev = NULL;
+    curr = q->head;
 
+    while (curr) {
+        next = curr->next;
+        curr->next = prev;
+        prev = curr;
+        curr = next;
+    }
+    q->tail = q->head;
+    q->head = prev;
+}
+list_ele_t *merge(list_ele_t *left, list_ele_t *right)
+{
+    list_ele_t *tmp, *head;
+
+    if (strcmp(left->value, right->value) < 0) {
+        head = left;
+        left = left->next;
+    } else {
+        head = right;
+        right = right->next;
+    }
+    tmp = head;
+    while (left && right) {
+        if (strcmp(left->value, right->value) < 0) {
+            tmp->next = left;
+            tmp = tmp->next;
+            left = left->next;
+        } else {
+            tmp->next = right;
+            tmp = tmp->next;
+            right = right->next;
+        }
+    }
+    if (left) {
+        tmp->next = left;
+    }
+    if (right) {
+        tmp->next = right;
+    }
+    return head;
+}
+list_ele_t *mergeSortList(list_ele_t *head)
+{
+    // Divide until only one list_element in splited list
+    if (!head || !head->next) {
+        return head;
+    }
+    list_ele_t *fast = head->next;
+    list_ele_t *slow = head;
+
+    // Split list (using Floyd Cycle Detection Algorithm)
+    while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    fast = slow->next;
+    slow->next = NULL;
+
+    list_ele_t *left = mergeSortList(head);
+    list_ele_t *right = mergeSortList(fast);
+    // Conquer the list
+    return merge(left, right);
+}
 /*
  * Sort elements of queue in ascending order
  * No effect if q is NULL or empty. In addition, if q has only one
@@ -167,6 +236,11 @@ void q_reverse(queue_t *q)
  */
 void q_sort(queue_t *q)
 {
-    /* TODO: You need to write the code for this function */
-    /* TODO: Remove the above comment when you are about to implement. */
+    if (!q || q->size < 2) {
+        return;
+    }
+    q->head = mergeSortList(q->head);
+    while (q->tail->next) {
+        q->tail = q->tail->next;
+    }
 }
